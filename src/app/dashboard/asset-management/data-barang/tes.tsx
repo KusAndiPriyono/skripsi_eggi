@@ -56,7 +56,7 @@ const UsersPage: React.FC = () => {
       name: selectedUser?.nama || "",
       username: selectedUser?.username || "",
       password: selectedUser?.password || "",
-      role: selectedUser?.role === "admin" ? 1 : 2 || 0,
+      role: selectedUser?.role === "admin" ? 1 : selectedUser?.role === "user" ? 2 : 0,
     },
   });
 

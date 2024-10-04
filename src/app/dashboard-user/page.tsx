@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import BarangDashboardTable from "./table";
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import BarangDashboardTable from './table';
 import {
   Dialog,
   DialogClose,
@@ -11,9 +11,9 @@ import {
   DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+} from '@/components/ui/dialog';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Form,
   FormControl,
@@ -21,18 +21,18 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
 import {
   SelectValue,
   SelectTrigger,
   SelectContent,
   SelectItem,
   Select,
-} from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { toast } from "react-hot-toast";
+} from '@/components/ui/select';
+import { useForm } from 'react-hook-form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { toast } from 'react-hot-toast';
 
 interface Barang {
   id: number;
@@ -47,8 +47,8 @@ interface Barang {
 
 // Zod schema expecting numbers
 const formSchema = z.object({
-  barang_id: z.number().int().min(1, "Please select a valid barang ID"),
-  jumlah: z.number().int().min(1, "Jumlah must be at least 1"),
+  barang_id: z.number().int().min(1, 'Please select a valid barang ID'),
+  jumlah: z.number().int().min(1, 'Jumlah must be at least 1'),
 });
 
 const DashboardPage: React.FC = () => {
@@ -63,63 +63,72 @@ const DashboardPage: React.FC = () => {
     resolver: zodResolver(formSchema),
   });
 
-  const fetchRequest = async () => {
+  const fetchRequest = async (token: string) => {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem("token");
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BASE_URL}/user/request`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "ngrok-skip-browser-warning": "69420",
+            'ngrok-skip-browser-warning': '69420',
           },
         }
       );
       if (response.status === 200) {
-        console.log("Response data from fetchRequest:", response.data.data);
+        console.log('Response data from fetchRequest:', response.data.data);
         setRequest(response.data.data);
       } else {
-        console.error("Unexpected status code:", response.status);
+        console.error('Unexpected status code:', response.status);
       }
     } catch (error) {
-      setError("Error fetching data. Please try again later.");
-      console.error("Error fetching data:", error);
+      setError('Error fetching data. Please try again later.');
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchBarang = async () => {
+  const fetchBarang = async (token: string) => {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem("token");
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BASE_URL}/user/barang`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "ngrok-skip-browser-warning": "69420",
+            'ngrok-skip-browser-warning': '69420',
           },
         }
       );
 
-      console.log("barang", response);
+      console.log('barang', response);
       if (response.status === 200) {
-        console.log("Response data from fetchRequest:", response.data.data);
+        console.log('Response data from fetchRequest:', response.data.data);
         setBarang(response.data.data);
       } else {
-        console.error("Unexpected status code:", response.status);
+        console.error('Unexpected status code:', response.status);
       }
     } catch (error) {
-      setError("Error fetching data. Please try again later.");
-      console.error("Error fetching data:", error);
+      setError('Error fetching data. Please try again later.');
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Only access localStorage in the browser
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetchRequest(token);
+      fetchBarang(token);
+    } else {
+      setError('Token not found. Please log in.');
+    }
+  }, []);
 
   const handleFormSubmit = (values: z.infer<typeof formSchema>) => {
     setFormValues(values);
@@ -129,7 +138,7 @@ const DashboardPage: React.FC = () => {
   const handleConfirmSubmit = async () => {
     if (!formValues) return;
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     setIsConfirmationOpen(false); // Close the confirmation modal
     toast.promise(
       axios
@@ -142,73 +151,69 @@ const DashboardPage: React.FC = () => {
           {
             headers: {
               Authorization: `Bearer ${token}`,
-              "ngrok-skip-browser-warning": "69420",
+              'ngrok-skip-browser-warning': '69420',
             },
           }
         )
         .then((response) => {
-          console.log("Response:", response.data);
-          fetchRequest(); // Optionally, fetch the data again after submission
+          console.log('Response:', response.data);
+          if (token) {
+            fetchRequest(token); // Optionally, fetch the data again after submission
+          } else {
+            console.error('Token is null');
+          }
         })
         .catch((error) => {
-          console.error("Error:", error);
-          throw new Error("Add request failed. Please try again.");
+          console.error('Error:', error);
+          throw new Error('Add request failed. Please try again.');
         }),
       {
-        loading: "Loading...",
-        success: "Request added successfully!",
-        error: "Add request failed. Please try again.",
+        loading: 'Loading...',
+        success: 'Request added successfully!',
+        error: 'Add request failed. Please try again.',
       }
     );
   };
-
-  useEffect(() => {
-    fetchRequest();
-  }, []);
-
-  useEffect(() => {
-    fetchBarang();
-  }, []);
 
   if (loading) return <div>Loading...</div>;
 
   if (error) return <div>{error}</div>;
 
   return (
-    <div className="bg-white h-full w-full p-6 font-sans flex flex-col">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-bold underline">Dashboard</h1>
-        <p className="text-xl">
+    <div className='bg-white h-full w-full p-6 font-sans flex flex-col'>
+      <div className='flex flex-col gap-2'>
+        <h1 className='text-4xl font-bold underline'>Dashboard</h1>
+        <p className='text-xl'>
           Selamat Datang di Sistem Inventory Aset SIPlah
         </p>
       </div>
       <Dialog>
         <DialogTrigger asChild>
-          <div className="flex gap-2 cursor-pointer">
-            <p className="font-bold underline">New Request</p>
+          <div className='flex gap-2 cursor-pointer'>
+            <p className='font-bold underline'>New Request</p>
           </div>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-2xl bg-[#D0D9EB]">
+        <DialogContent className='sm:max-w-2xl bg-[#D0D9EB]'>
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(handleFormSubmit)}
-              className="w-full flex flex-col gap-4"
+              className='w-full flex flex-col gap-4'
             >
               <FormField
                 control={form.control}
-                name="barang_id"
+                name='barang_id'
                 render={({ field }) => (
-                  <FormItem className="w-full">
+                  <FormItem className='w-full'>
                     <FormLabel>Pilih Barang</FormLabel>
                     <Select
                       onValueChange={(value) => {
                         field.onChange(Number(value)); // Convert to number
                       }}
-                      value={field.value?.toString() || ""}
+                      value={field.value?.toString() || ''}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Pilih barang" />
+                          <SelectValue placeholder='Pilih barang' />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -229,22 +234,22 @@ const DashboardPage: React.FC = () => {
 
               <FormField
                 control={form.control}
-                name="jumlah"
+                name='jumlah'
                 render={({ field }) => (
-                  <FormItem className="relative">
-                    <p className="font-semibold text-lg translate-y-2">
+                  <FormItem className='relative'>
+                    <p className='font-semibold text-lg translate-y-2'>
                       Jumlah Request
                     </p>
                     <FormControl>
-                      <div className="relative flex items-center">
+                      <div className='relative flex items-center'>
                         <Input
-                          placeholder="Jumlah"
-                          type="number"
+                          placeholder='Jumlah'
+                          type='number'
                           {...field}
                           onChange={(e) =>
                             field.onChange(Number(e.target.value))
                           }
-                          className="p-6 bg-[#C6DBE0] placeholder:text-xl placeholder:text-zinc-600 text-primary text-xl rounded-full"
+                          className='p-6 bg-[#C6DBE0] placeholder:text-xl placeholder:text-zinc-600 text-primary text-xl rounded-full'
                         />
                       </div>
                     </FormControl>
@@ -253,17 +258,17 @@ const DashboardPage: React.FC = () => {
                 )}
               />
 
-              <div className="w-full flex justify-center gap-4">
+              <div className='w-full flex justify-center gap-4'>
                 <button
-                  type="submit"
-                  className="px-8 py-2 bg-[#B9FF99] rounded-md font-sans font-bold"
+                  type='submit'
+                  className='px-8 py-2 bg-[#B9FF99] rounded-md font-sans font-bold'
                 >
                   Request
                 </button>
                 <DialogClose asChild>
                   <button
-                    type="button"
-                    className="px-6 py-2 bg-[#FFFCB6] rounded-md font-sans font-bold"
+                    type='button'
+                    className='px-6 py-2 bg-[#FFFCB6] rounded-md font-sans font-bold'
                   >
                     Close
                   </button>
@@ -275,7 +280,7 @@ const DashboardPage: React.FC = () => {
       </Dialog>
 
       <Dialog open={isConfirmationOpen} onOpenChange={setIsConfirmationOpen}>
-        <DialogContent className="bg-[#F1B9B9]">
+        <DialogContent className='bg-[#F1B9B9]'>
           <DialogTitle>Konfirmasi Barang</DialogTitle>
           <DialogDescription>
             Pastikan nama barang sudah sesuai Pastikan kembali jumlah barang
@@ -283,13 +288,13 @@ const DashboardPage: React.FC = () => {
           </DialogDescription>
           <DialogFooter>
             <div
-              className="px-4 py-2 rounded-md bg-[#B9FF99]"
+              className='px-4 py-2 rounded-md bg-[#B9FF99]'
               onClick={handleConfirmSubmit}
             >
               Tambah Barang
             </div>
             <DialogClose asChild>
-              <div className="px-4 py-2 rounded-md bg-[#FBF8B3]">Batal</div>
+              <div className='px-4 py-2 rounded-md bg-[#FBF8B3]'>Batal</div>
             </DialogClose>
           </DialogFooter>
         </DialogContent>
